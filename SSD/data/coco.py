@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[9]:
+
+
 from .config import HOME
 import os
 import os.path as osp
@@ -8,26 +14,21 @@ import torchvision.transforms as transforms
 import cv2
 import numpy as np
 
+
+# In[10]:
+
+
+
 COCO_ROOT = osp.join(HOME, 'data/coco/')
 IMAGES = 'images'
 ANNOTATIONS = 'annotations'
 COCO_API = 'PythonAPI'
 INSTANCES_SET = 'instances_{}.json'
-COCO_CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
-                'train', 'truck', 'boat', 'traffic light', 'fire', 'hydrant',
-                'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
-                'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
-                'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
-                'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
-                'kite', 'baseball bat', 'baseball glove', 'skateboard',
-                'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
-                'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-                'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
-                'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
-                'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-                'keyboard', 'cell phone', 'microwave oven', 'toaster', 'sink',
-                'refrigerator', 'book', 'clock', 'vase', 'scissors',
-                'teddy bear', 'hair drier', 'toothbrush')
+COCO_CLASSES = ('person', 'bicycle', 'car', 'bus', 'truck', 'traffic light')
+
+
+# In[11]:
+
 
 
 def get_label_map(label_file):
@@ -37,6 +38,10 @@ def get_label_map(label_file):
         ids = line.split(',')
         label_map[int(ids[0])] = int(ids[1])
     return label_map
+
+
+# In[12]:
+
 
 
 class COCOAnnotationTransform(object):
@@ -70,6 +75,10 @@ class COCOAnnotationTransform(object):
                 print("no bbox problem!")
 
         return res  # [[xmin, ymin, xmax, ymax, label_idx], ... ]
+
+
+# In[13]:
+
 
 
 class COCODetection(data.Dataset):
@@ -178,3 +187,4 @@ class COCODetection(data.Dataset):
         tmp = '    Target Transforms (if any): '
         fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         return fmt_str
+

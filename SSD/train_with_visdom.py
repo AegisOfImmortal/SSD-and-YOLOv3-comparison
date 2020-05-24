@@ -24,6 +24,13 @@ import numpy as np
 # In[ ]:
 
 
+import visdom
+viz = visdom.Visdom()
+
+
+# In[ ]:
+
+
 lr = 1e-3
 momentum = 0.9
 weight_decay = 5e-4
@@ -33,7 +40,7 @@ torch.set_default_tensor_type('torch.FloatTensor')
 
 if not os.path.exists('weights/'):
     os.mkdir(args.save_folder)
-
+    
 def train():
     if not os.path.exists(COCO_ROOT):
         print("Error: NO COCO_ROOT")
@@ -54,7 +61,7 @@ def train():
     ssd_net.extras.apply(weights_init)
     ssd_net.loc.apply(weights_init)
     ssd_net.conf.apply(weights_init)
-
+    
     optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum,
                           weight_decay=weight_decay)
     criterion = MultiBoxLoss(cfg['num_classes'], 0.5, True, 0, True, 3, 0.5,
@@ -67,11 +74,16 @@ def train():
     conf_loss = 0
     epoch = 0
     print('Loading the dataset...')
-
+    
     epoch_size = len(dataset) // 32
     print('Training SSD on:', dataset.name)
     
     step_index = 0
+    
+    vis_title = 'SSD.PyTorch on ' + dataset.name
+    vis_legend = ['Loc Loss', 'Conf Loss', 'Total Loss']
+    iter_plot = create_vis_plot('Iteration', 'Loss', vis_title, vis_legend)
+    epoch_plot = create_vis_plot('Epoch', 'Loss', vis_title, vis_legend)
     
     data_loader = data.DataLoader(dataset, 32,
                                   num_workers=4,
@@ -81,6 +93,15 @@ def train():
     # create batch iterator
     batch_iterator = iter(data_loader)
     for iteration in range(0, cfg['max_iter']):
+        if iteration != 0 and (iteration % epoch_size == 0):
+            update_vis_plot(epoch, loc_loss, conf_loss, epoch_plot, None,
+                            'append', epoch_size)
+            
+            # reset epoch loss counters
+            loc_loss = 0
+            conf_loss = 0
+            epoch += 1
+            
         if iteration in cfg['lr_steps']:
             step_index += 1
             adjust_learning_rate(optimizer, gamma, step_index)
@@ -108,6 +129,9 @@ def train():
             print('timer: %.4f sec.' % (t1 - t0))
             print('iter ' + repr(iteration) + ' || Loss: %.4f ||' % (loss.data), end=' ')
             
+        update_vis_plot(iteration, loss_l.data, loss_c.data,
+                            iter_plot, epoch_plot, 'append')
+        
         if iteration != 0 and iteration % 5000 == 0:
             print('Saving state, iter:', iteration)
             torch.save(ssd_net.state_dict(), 'weights/ssd512_COCO_' +
@@ -133,6 +157,36 @@ def weights_init(m):
     if isinstance(m, nn.Conv2d):
         xavier(m.weight.data)
         m.bias.data.zero_()
+        
+def create_vis_plot(_xlabel, _ylabel, _title, _legend):
+    return viz.line(
+        X=torch.zeros((1,)).cpu(),
+        Y=torch.zeros((1, 3)).cpu(),
+        opts=dict(
+            xlabel=_xlabel,
+            ylabel=_ylabel,
+            title=_title,
+            legend=_legend
+        )
+    )
+
+def update_vis_plot(iteration, loc, conf, window1, window2, update_type,
+                    epoch_size=1):
+    viz.line(
+        X=torch.ones((1, 3)).cpu() * iteration,
+        Y=torch.Tensor([loc, conf, loc + conf]).unsqueeze(0).cpu() / epoch_size,
+        win=window1,
+        update=update_type
+    )
+    
+    # initialize epoch plot on first iteration
+    if iteration == 0:
+        viz.line(
+            X=torch.zeros((1, 3)).cpu(),
+            Y=torch.Tensor([loc, conf, loc + conf]).unsqueeze(0).cpu(),
+            win=window2,
+            update=True
+        )
 
 
 # In[ ]:

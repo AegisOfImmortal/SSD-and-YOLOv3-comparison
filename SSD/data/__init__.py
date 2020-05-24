@@ -1,10 +1,18 @@
-from .voc0712 import VOCDetection, VOCAnnotationTransform, VOC_CLASSES, VOC_ROOT
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[6]:
+
 
 from .coco import COCODetection, COCOAnnotationTransform, COCO_CLASSES, COCO_ROOT, get_label_map
 from .config import *
 import torch
 import cv2
 import numpy as np
+
+
+# In[7]:
+
 
 def detection_collate(batch):
     """Custom collate fn for dealing with batches of images that have a different
@@ -41,3 +49,4 @@ class BaseTransform:
 
     def __call__(self, image, boxes=None, labels=None):
         return base_transform(image, self.size, self.mean), boxes, labels
+

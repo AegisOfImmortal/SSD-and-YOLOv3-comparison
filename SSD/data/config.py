@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[2]:
+
+
 # config.py
 import os.path
 
@@ -40,3 +46,4 @@ coco = {
     'clip': True,
     'name': 'COCO',
 }
+
